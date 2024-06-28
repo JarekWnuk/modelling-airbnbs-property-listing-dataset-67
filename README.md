@@ -1,0 +1,3 @@
+# Modelling Airbnb's property listing dataset
+## Description
+The project involves using property data from Airbnb to make predictions with the use of different model types, including: linear regression, classification and neural networks. The data is also of different types like: numerical, image and text. Each of those types are to be used as model features. The aim of the project is to evaluate and optimize the models to obtain accurate predictions. 
