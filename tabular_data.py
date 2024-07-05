@@ -45,7 +45,7 @@ def set_default_feature_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     cols_to_set = ["guests", "beds", "bathrooms", "bedrooms"]
     for column in cols_to_set:
-        df[column].fillna(1, inplace=True)
+        df[column] = df[column].fillna(1)
     df[pd.to_numeric(df["bedrooms"], errors='coerce').isnull()] = 1
     return df
 
