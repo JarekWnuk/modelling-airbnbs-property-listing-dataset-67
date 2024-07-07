@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import tabular_data
 from sklearn import model_selection
-from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.metrics import r2_score, root_mean_squared_error
 from sklearn.linear_model import SGDRegressor
 
 
@@ -23,8 +23,8 @@ def custom_tune_regression_model_hyperparameters(model_class, X_train, y_train, 
     initial_model.fit(X_train, y_train)
     y_pred_test = initial_model.predict(X_test)
     y_pred_val = initial_model.predict(X_validation)
-    RMSE_test = mean_squared_error(y_true=y_test, y_pred=y_pred_test, squared=False)
-    RMSE_validation = mean_squared_error(y_true=y_validation, y_pred=y_pred_val, squared=False)
+    RMSE_test = root_mean_squared_error(y_true=y_test, y_pred=y_pred_test)
+    RMSE_validation = root_mean_squared_error(y_true=y_validation, y_pred=y_pred_val)
     R2_validation= r2_score(y_validation, y_pred_val)
     model_metrics = {"test_RMSE" : RMSE_test, "validation_RMSE" : RMSE_validation, "validation_R2" : R2_validation}
 
@@ -38,14 +38,14 @@ def custom_tune_regression_model_hyperparameters(model_class, X_train, y_train, 
     hyperparam_combination_dicts = [dict(zip(keys, v)) for v in product(*values)] #generate combinations of all hyperparameters
     best_model = initial_model
     best_hyperparams = initial_hyperparams
-    print(hyperparam_combination_dicts)
+
     for hyperparams in hyperparam_combination_dicts:
         new_model = model_class(**hyperparams)
         new_model.fit(X_train, y_train)
         y_pred_test = new_model.predict(X_test)
         y_pred_val = new_model.predict(X_validation)
-        new_RMSE_test = mean_squared_error(y_true=y_test, y_pred=y_pred_test, squared=False)
-        new_RMSE_validation = mean_squared_error(y_true=y_validation, y_pred=y_pred_val, squared=False)
+        new_RMSE_test = root_mean_squared_error(y_true=y_test, y_pred=y_pred_test) 
+        new_RMSE_validation = root_mean_squared_error(y_true=y_validation, y_pred=y_pred_val)
         new_R2_validation = r2_score(y_validation, y_pred_val)
 
         if new_RMSE_validation < model_metrics["validation_RMSE"]:
@@ -64,8 +64,8 @@ y_pred_test = linear_model.predict(X_test)
 
 R2_train = r2_score(y_train, y_pred_train)
 R2_test = r2_score(y_test, y_pred_test)
-RMSE_train = mean_squared_error(y_train, y_pred_train, squared=False)
-RMSE_test = mean_squared_error(y_test, y_pred_test, squared=False)
+RMSE_train = root_mean_squared_error(y_train, y_pred_train)
+RMSE_test = root_mean_squared_error(y_test, y_pred_test)
 
 hyperparams_dict ={"loss" : ["squared_error", "huber"], "penalty" : ["l2", "l1"], "max_iter" : [100, 500, 1000, 2000]}
 best_model, best_hyperparams, model_metrics = custom_tune_regression_model_hyperparameters(SGDRegressor, X_train, y_train,
