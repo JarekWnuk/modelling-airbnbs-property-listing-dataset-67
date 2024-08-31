@@ -2,11 +2,13 @@ import json
 import joblib
 from itertools import product
 import pandas as pd
-import numpy as np
 import os
 import tabular_data
 from sklearn import model_selection
 from sklearn.linear_model import SGDRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score, root_mean_squared_error
 
 
@@ -23,7 +25,7 @@ def custom_tune_regression_model_hyperparameters(
         model_class, X_train, y_train, X_validation, y_validation, X_test, y_test, hyperparams_dict: dict
         ):
     """
-    Custom function for tunning model hyperparameters.
+    Custom function for tuning model hyperparameters.
     Args:
         model_class (linear_model): regression model class
         X_train (pd.Dataframe): features for training
@@ -170,5 +172,19 @@ if __name__ == "__main__":
         print(f"{key} : {value}")
 
     folder = "models/regression/linear_regression"
-    save_model(folder, best_model, best_hyperparams, model_metrics)
+    #save_model(folder, best_model, best_hyperparams, model_metrics)
+
+    models = [SGDRegressor, DecisionTreeRegressor, RandomForestRegressor, GradientBoostingRegressor]
+
+    #TODO hyperparameter tuning for each model
+    for model in models:
+        new_model = model()
+        new_model.fit(X_train, y_train)
+        y_pred_test = new_model.predict(X_test)
+        y_pred_val = new_model.predict(X_validation)
+        R2_test = r2_score(y_test, y_pred_test)
+        R2_val = r2_score(y_validation, y_pred_val)
+        RMSE_test = root_mean_squared_error(y_test, y_pred_test)
+        RMSE_val = root_mean_squared_error(y_validation, y_pred_val)
+        print(f"\n{new_model} metrics: \nR2 test: {R2_test}\nR2 validation: {R2_val}\nRMSE test: {RMSE_test}\nRMSE validation: {RMSE_val}\n")
 
