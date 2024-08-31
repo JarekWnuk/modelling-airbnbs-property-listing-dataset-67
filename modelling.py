@@ -1,6 +1,9 @@
+import json
+import joblib
 from itertools import product
 import pandas as pd
 import numpy as np
+import os
 import tabular_data
 from sklearn import model_selection
 from sklearn.linear_model import SGDRegressor
@@ -67,6 +70,21 @@ def tune_regression_model_hyperparameters(model, X_train, y_train, hyperparams_d
     grid_search.fit(X_train, y_train)
     return grid_search.best_params_
 
+def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
+    model_complete_path = folder + "/model.joblib"
+    model_normalized_path = os.path.normcase(model_complete_path)
+    joblib.dump(model, model_normalized_path)
+
+    hyperparams_json_string = json.dumps(hyperparams)
+    hyperparams_complete_path = folder + "/hyperparameters.json"
+    hyperparams_normalized_path = os.path.normcase(hyperparams_complete_path)
+    joblib.dump(hyperparams_json_string, hyperparams_normalized_path)
+
+    metrics_json_string = json.dumps(metrics)
+    metrics_complete_path = folder + "/metrics.json"
+    metrics_normalized_path = os.path.normcase(metrics_complete_path)
+    joblib.dump(metrics_json_string, metrics_normalized_path)
+
 linear_model = SGDRegressor()
 linear_model.fit(X_train, y_train)
 y_pred_train = linear_model.predict(X_train)
@@ -81,22 +99,6 @@ hyperparams_dict ={"loss" : ["squared_error", "huber"],"max_iter" : [100, 500, 1
 best_model, best_hyperparams, model_metrics = custom_tune_regression_model_hyperparameters(
     SGDRegressor, X_train, y_train, X_validation, y_validation, X_test, y_test, hyperparams_dict
     )
-
-# import matplotlib.pyplot as plt
-
-# y_hat_validation = best_model.predict(X_validation)
-
-# def plot_predictions(y_pred, y_true):
-#     samples = len(y_pred)
-#     plt.figure()
-#     plt.scatter(np.arange(samples), y_pred, c='r', label='predictions')
-#     plt.scatter(np.arange(samples), y_true, c='b', label='true labels', marker='x')
-#     plt.legend()
-#     plt.xlabel('Sample numbers')
-#     plt.ylabel('Values')
-#     plt.show()
-
-# plot_predictions(y_hat_validation, y_validation)
 
 best_params_grid_search = tune_regression_model_hyperparameters(SGDRegressor(), X_train, y_train, hyperparams_dict)
 model_best_heparparams = SGDRegressor(**best_params_grid_search)
@@ -127,3 +129,7 @@ for key, value in model_metrics.items():
 print("\nMetrics for best model from sklearn grid search:")
 for key, value in best_model_metrics.items():
     print(f"{key} : {value}")
+
+folder = "models/regression/linear_regression"
+save_model(folder, best_model, best_hyperparams, model_metrics)
+print(X_train)
