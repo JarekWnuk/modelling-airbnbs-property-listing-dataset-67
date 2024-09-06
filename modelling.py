@@ -104,6 +104,7 @@ def tune_regression_model_hyperparameters(model, X_train, y_train, hyperparams_d
 def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
     """
     Function that alows to save the model to a joblib file, and it's hyperparameters and metrics to json files.
+    Creates directory specified in folder string if does not exist.
     Args:
         folder (str): path to save the file
         model (linear model): regression model instance
@@ -111,6 +112,9 @@ def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
         metrics (dict): dictionary with model metrics
 
     """
+    if os.path.isdir(folder) == False:
+        os.mkdir(folder)
+
     model_complete_path = folder + "/model.joblib"
     model_normalized_path = os.path.normcase(model_complete_path)
     joblib.dump(model, model_normalized_path)
@@ -125,66 +129,28 @@ def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
     metrics_normalized_path = os.path.normcase(metrics_complete_path)
     joblib.dump(metrics_json_string, metrics_normalized_path)
 
+def evaluate_all_models(models : list, hyperparam_dicts : list):
+    models_and_hyperparams = zip(models, hyperparam_dicts)
+    for model, hyperparams_dict in models_and_hyperparams:
+        best_model, best_hyperparams, model_metrics = custom_tune_regression_model_hyperparameters(
+                                                        model, X_train, y_train, X_validation, y_validation, X_test, y_test, hyperparams_dict)
+        print(f"\n{type(best_model).__name__} \nmetrics: {model_metrics}")
+
+        #use model name as directory name
+        folder = "models/regression/linear_regression/" + type(best_model).__name__
+        save_model(folder, best_model, best_hyperparams, model_metrics)
+
 if __name__ == "__main__":
-    linear_model = SGDRegressor()
-    linear_model.fit(X_train, y_train)
-    y_pred_train = linear_model.predict(X_train)
-    y_pred_test = linear_model.predict(X_test)
-
-    R2_train = r2_score(y_train, y_pred_train)
-    R2_test = r2_score(y_test, y_pred_test)
-    RMSE_train = root_mean_squared_error(y_train, y_pred_train)
-    RMSE_test = root_mean_squared_error(y_test, y_pred_test)
-
-    hyperparams_dict ={"loss" : ["squared_error", "huber"],"max_iter" : [500, 1000, 2000, 3000], "penalty" : ["l2", "l1"]}
-    best_model, best_hyperparams, model_metrics = custom_tune_regression_model_hyperparameters(
-        SGDRegressor, X_train, y_train, X_validation, y_validation, X_test, y_test, hyperparams_dict
-        )
-
-    best_params_grid_search = tune_regression_model_hyperparameters(SGDRegressor(), X_train, y_train, hyperparams_dict)
-    model_best_hyperparams = SGDRegressor(**best_params_grid_search)
-    model_best_hyperparams.fit(X_train, y_train)
-    best_model_prediction_test = model_best_hyperparams.predict(X_test)
-    best_model_prediction_val = model_best_hyperparams.predict(X_validation)
-
-    best_model_metrics = {}
-    grid_RMSE_test = root_mean_squared_error(y_test, best_model_prediction_test)
-    grid_RMSE_val= root_mean_squared_error(y_validation, best_model_prediction_val)
-    grid_R2_val = r2_score(y_validation, best_model_prediction_val)
-    best_model_metrics["test_RMSE"] = grid_RMSE_test
-    best_model_metrics["validation_RMSE"] = grid_RMSE_val
-    best_model_metrics["validation_R2"] = grid_R2_val
-
-    print("\nBest hyperparameters found in custom grid search:")
-    for key, value in best_hyperparams.items():
-        print(f"{key} : {value}")
-
-    print("\nBest hyperparameters found from sklearn grid search:")
-    for key, value in best_params_grid_search.items():
-        print(f"{key} : {value}")
-
-    print("\nMetrics for best model from custom grid search:")
-    for key, value in model_metrics.items():
-        print(f"{key} : {value}")
-
-    print("\nMetrics for best model from sklearn grid search:")
-    for key, value in best_model_metrics.items():
-        print(f"{key} : {value}")
-
-    folder = "models/regression/linear_regression"
-    #save_model(folder, best_model, best_hyperparams, model_metrics)
-
     models = [SGDRegressor, DecisionTreeRegressor, RandomForestRegressor, GradientBoostingRegressor]
-
-    #TODO hyperparameter tuning for each model
-    for model in models:
-        new_model = model()
-        new_model.fit(X_train, y_train)
-        y_pred_test = new_model.predict(X_test)
-        y_pred_val = new_model.predict(X_validation)
-        R2_test = r2_score(y_test, y_pred_test)
-        R2_val = r2_score(y_validation, y_pred_val)
-        RMSE_test = root_mean_squared_error(y_test, y_pred_test)
-        RMSE_val = root_mean_squared_error(y_validation, y_pred_val)
-        print(f"\n{new_model} metrics: \nR2 test: {R2_test}\nR2 validation: {R2_val}\nRMSE test: {RMSE_test}\nRMSE validation: {RMSE_val}\n")
-
+    sgd_hyperparams_dict = {"loss" : ["squared_error", "huber"],"max_iter" : [500, 1000, 2000, 3000], "penalty" : ["l2", "l1"]}
+    decision_tree_hyperparams_dict = {"criterion" : ["squared_error", "friedman_mse", "absolute_error"],
+                                      "min_samples_leaf" : [1, 2], "max_features" : [1, 2, 3],
+                                      "splitter" : ["best", "random"], "min_samples_split" : [2, 3, 4]}
+    random_forest_hyperparams_dict = {"n_estimators" : [300, 500, 1000],
+                                      "criterion" : ["squared_error", "absolute_error"],
+                                      "min_samples_leaf" : [1, 2], "max_features" : [1, 2, 3]}
+    grad_boost_hyperparams_dict = {"loss" : ['squared_error', 'absolute_error'],
+                                   "learning_rate" : [0.1, 0.05, 0.2], "n_estimators" : [300, 500, 1000],
+                                   "criterion" : ['friedman_mse', 'squared_error']}
+    hyperparam_dicts = [sgd_hyperparams_dict, decision_tree_hyperparams_dict, random_forest_hyperparams_dict, grad_boost_hyperparams_dict]
+    evaluate_all_models(models, hyperparam_dicts)
