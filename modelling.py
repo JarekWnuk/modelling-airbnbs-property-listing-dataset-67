@@ -129,28 +129,36 @@ def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
     metrics_normalized_path = os.path.normcase(metrics_complete_path)
     joblib.dump(metrics_json_string, metrics_normalized_path)
 
-def evaluate_all_models(models : list, hyperparam_dicts : list):
+def evaluate_all_models(models : list, hyperparam_dicts : list) -> None:
+    """
+    Evaluates models with the passed hyperparameters using the custom tuning function.
+    The list of model types and hyperparameter dicts must match in sequence.
+    Saves the best model, best hyperparameters and metrics for each model type.
+    Args:
+        models (list): a list containing model classes
+        hyperparam_dicts (list): a list containing hyperparameter dictionaries
+    """
     models_and_hyperparams = zip(models, hyperparam_dicts)
     for model, hyperparams_dict in models_and_hyperparams:
         best_model, best_hyperparams, model_metrics = custom_tune_regression_model_hyperparameters(
                                                         model, X_train, y_train, X_validation, y_validation, X_test, y_test, hyperparams_dict)
-        print(f"\n{type(best_model).__name__} \nmetrics: {model_metrics}")
+        print(f"\n{type(best_model).__name__} \nHyperparameters: {best_hyperparams} \nMetrics: {model_metrics}")
 
         #use model name as directory name
         folder = "models/regression/linear_regression/" + type(best_model).__name__
         save_model(folder, best_model, best_hyperparams, model_metrics)
 
 if __name__ == "__main__":
-    models = [SGDRegressor, DecisionTreeRegressor, RandomForestRegressor, GradientBoostingRegressor]
+    models = [SGDRegressor, DecisionTreeRegressor,  RandomForestRegressor, GradientBoostingRegressor]
     sgd_hyperparams_dict = {"loss" : ["squared_error", "huber"],"max_iter" : [500, 1000, 2000, 3000], "penalty" : ["l2", "l1"]}
     decision_tree_hyperparams_dict = {"criterion" : ["squared_error", "friedman_mse", "absolute_error"],
                                       "min_samples_leaf" : [1, 2], "max_features" : [1, 2, 3],
                                       "splitter" : ["best", "random"], "min_samples_split" : [2, 3, 4]}
-    random_forest_hyperparams_dict = {"n_estimators" : [300, 500, 1000],
+    random_forest_hyperparams_dict = {"n_estimators" : [500, 1000, 2000],
                                       "criterion" : ["squared_error", "absolute_error"],
-                                      "min_samples_leaf" : [1, 2], "max_features" : [1, 2, 3]}
+                                      "min_samples_leaf" : [1, 2, 3], "max_features" : [1, 2, 3]}
     grad_boost_hyperparams_dict = {"loss" : ['squared_error', 'absolute_error'],
-                                   "learning_rate" : [0.1, 0.05, 0.2], "n_estimators" : [300, 500, 1000],
+                                   "learning_rate" : [0.1, 0.2, 0.5], "n_estimators" : [500, 1000, 2000],
                                    "criterion" : ['friedman_mse', 'squared_error']}
     hyperparam_dicts = [sgd_hyperparams_dict, decision_tree_hyperparams_dict, random_forest_hyperparams_dict, grad_boost_hyperparams_dict]
     evaluate_all_models(models, hyperparam_dicts)
