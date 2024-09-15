@@ -119,17 +119,17 @@ def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
     model_normalized_path = os.path.normcase(model_complete_path)
     joblib.dump(model, model_normalized_path)
 
-    hyperparams_json_string = json.dumps(hyperparams)
     hyperparams_complete_path = folder + "/hyperparameters.json"
     hyperparams_normalized_path = os.path.normcase(hyperparams_complete_path)
-    joblib.dump(hyperparams_json_string, hyperparams_normalized_path)
+    with open(hyperparams_normalized_path, "w") as file:
+        json.dump(hyperparams, file)
 
-    metrics_json_string = json.dumps(metrics)
     metrics_complete_path = folder + "/metrics.json"
     metrics_normalized_path = os.path.normcase(metrics_complete_path)
-    joblib.dump(metrics_json_string, metrics_normalized_path)
+    with open(metrics_normalized_path, "w") as file:
+        json.dump(metrics, file)
 
-def evaluate_all_models(models : list, hyperparam_dicts : list) -> None:
+def evaluate_all_models(models: list, hyperparam_dicts: list, folder: str) -> None:
     """
     Evaluates models with the passed hyperparameters using the custom tuning function.
     The list of model types and hyperparameter dicts must match in sequence.
@@ -137,6 +137,7 @@ def evaluate_all_models(models : list, hyperparam_dicts : list) -> None:
     Args:
         models (list): a list containing model classes
         hyperparam_dicts (list): a list containing hyperparameter dictionaries
+        folder (str): directory used for saving data
     """
     models_and_hyperparams = zip(models, hyperparam_dicts)
     for model, hyperparams_dict in models_and_hyperparams:
@@ -145,8 +146,20 @@ def evaluate_all_models(models : list, hyperparam_dicts : list) -> None:
         print(f"\n{type(best_model).__name__} \nHyperparameters: {best_hyperparams} \nMetrics: {model_metrics}")
 
         #use model name as directory name
-        folder = "models/regression/linear_regression/" + type(best_model).__name__
-        save_model(folder, best_model, best_hyperparams, model_metrics)
+        data_dir = folder + "/" + type(best_model).__name__
+        save_model(data_dir, best_model, best_hyperparams, model_metrics)
+    
+def find_best_model(folder):
+    best_r2 = 0
+    for dir, subdir, file in os.walk(folder):
+        if os.path.isfile(dir + "/metrics.json"):
+            print("I am here")
+            with open(dir + "/" + "metrics.json", mode="r") as f:
+                json_string = f.read()
+                metrics_data = json.loads(json_string)
+                r2_from_metrics = metrics_data["validation_R2"]
+                print(r2_from_metrics)
+
 
 if __name__ == "__main__":
     models = [SGDRegressor, DecisionTreeRegressor,  RandomForestRegressor, GradientBoostingRegressor]
@@ -161,4 +174,7 @@ if __name__ == "__main__":
                                    "learning_rate" : [0.1, 0.2, 0.5], "n_estimators" : [500, 1000, 2000],
                                    "criterion" : ['friedman_mse', 'squared_error']}
     hyperparam_dicts = [sgd_hyperparams_dict, decision_tree_hyperparams_dict, random_forest_hyperparams_dict, grad_boost_hyperparams_dict]
-    evaluate_all_models(models, hyperparam_dicts)
+    folder = "models/regression/linear_regression"
+    #evaluate_all_models(models, hyperparam_dicts, folder)
+
+    
