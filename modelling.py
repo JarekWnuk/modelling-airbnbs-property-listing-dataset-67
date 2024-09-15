@@ -153,14 +153,22 @@ def find_best_model(folder):
     best_r2 = 0
     for dir, subdir, file in os.walk(folder):
         if os.path.isfile(dir + "/metrics.json"):
-            print("I am here")
-            with open(dir + "/" + "metrics.json", mode="r") as f:
+            with open(dir + "/metrics.json", mode="r") as f:
                 json_string = f.read()
-                metrics_data = json.loads(json_string)
-                r2_from_metrics = metrics_data["validation_R2"]
-                print(r2_from_metrics)
-
-
+                metrics_dict = json.loads(json_string)
+                r2_from_metrics = metrics_dict["validation_R2"]
+                if r2_from_metrics > best_r2:
+                    best_r2 = r2_from_metrics
+                    best_metrics_dict = metrics_dict
+                    best_performance_dir = dir
+    best_model_path = best_performance_dir + "/model.joblib"
+    best_model = joblib.load(best_model_path)
+    with open(best_performance_dir + "/hyperparameters.json", mode="r") as f:
+        json_string = f.read()
+        best_hyperparams_dict = json.loads(json_string)
+    print(f"The best performing model is the {type(best_model).__name__}. \nWith a validation R2 score of: {best_metrics_dict["validation_R2"]}")
+    return best_model, best_hyperparams_dict, best_metrics_dict
+                    
 if __name__ == "__main__":
     models = [SGDRegressor, DecisionTreeRegressor,  RandomForestRegressor, GradientBoostingRegressor]
     sgd_hyperparams_dict = {"loss" : ["squared_error", "huber"],"max_iter" : [500, 1000, 2000, 3000], "penalty" : ["l2", "l1"]}
@@ -175,6 +183,6 @@ if __name__ == "__main__":
                                    "criterion" : ['friedman_mse', 'squared_error']}
     hyperparam_dicts = [sgd_hyperparams_dict, decision_tree_hyperparams_dict, random_forest_hyperparams_dict, grad_boost_hyperparams_dict]
     folder = "models/regression/linear_regression"
-    #evaluate_all_models(models, hyperparam_dicts, folder)
-
+    evaluate_all_models(models, hyperparam_dicts, folder)
+    best_model, best_hyperparams, best_metrics = find_best_model(folder)
     

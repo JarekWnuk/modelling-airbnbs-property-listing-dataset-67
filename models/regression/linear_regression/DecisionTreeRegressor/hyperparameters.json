@@ -1,1 +1,1 @@
-{"criterion": "squared_error", "min_samples_leaf": 2, "max_features": 2, "splitter": "random", "min_samples_split": 3}
+{"criterion": "absolute_error", "min_samples_leaf": 2, "max_features": 2, "splitter": "random", "min_samples_split": 2}
