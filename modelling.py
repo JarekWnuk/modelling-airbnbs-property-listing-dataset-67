@@ -110,7 +110,6 @@ def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
         model (linear model): regression model instance
         hyperparams (dict): dictionary with hyperparameters
         metrics (dict): dictionary with model metrics
-
     """
     if os.path.isdir(folder) == False:
         os.mkdir(folder)
@@ -150,6 +149,17 @@ def evaluate_all_models(models: list, hyperparam_dicts: list, folder: str) -> No
         save_model(data_dir, best_model, best_hyperparams, model_metrics)
     
 def find_best_model(folder):
+    """
+    Function that traverses the passed directory and selects model with the best metrics.
+    The search is focused on the metrics.json file. 
+    Please ensure that the evaluate_all_models() function is run prior to this one.
+    Args:
+        folder (str): directory containing models and their metrics
+    Returns:
+        best_model (model instance): best model
+        best_hyperparams_dict (dict): dictionary with best model hyperparameters
+        best_metrics_dict (dict): dictionary with best model metrics
+    """
     best_r2 = 0
     for dir, subdir, file in os.walk(folder):
         if os.path.isfile(dir + "/metrics.json"):
