@@ -166,7 +166,7 @@ def find_best_model(folder):
     with open(best_performance_dir + "/hyperparameters.json", mode="r") as f:
         json_string = f.read()
         best_hyperparams_dict = json.loads(json_string)
-    print(f"The best performing model is the {type(best_model).__name__}. \nWith a validation R2 score of: {best_metrics_dict["validation_R2"]}")
+    print(f"The best performing model is the {type(best_model).__name__}. \nWith a validation R2 score of: {best_metrics_dict['validation_R2']}")
     return best_model, best_hyperparams_dict, best_metrics_dict
                     
 if __name__ == "__main__":
