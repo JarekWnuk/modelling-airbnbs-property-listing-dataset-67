@@ -25,21 +25,22 @@ def print_metrics(y_true, y_pred, name="input data"):
     accuracy = accuracy_score(y_true, y_pred)
     print(f"Metrics for {name} \n\nF1 score: {f1}\n\nPrecission score: {precission}\n\nRecall score: {recall}\n\nAccuracy score: {accuracy}")
 
-features, label = load_airbnb(df, "Category")
-X_train, X_test, y_train, y_test = model_selection.train_test_split(features, label, test_size=0.3)
-X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_test, y_test, test_size=0.5)
+if __name__ == "__main__":
+    features, label = load_airbnb(df, "Category")
+    X_train, X_test, y_train, y_test = model_selection.train_test_split(features, label, test_size=0.3)
+    X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_test, y_test, test_size=0.5)
 
-new_model = SGDClassifier()
-new_model.fit(X_train, y_train)
-y_pred_train = new_model.predict(X_train)
-y_pred_test = new_model.predict(X_test)
+    new_model = SGDClassifier()
+    new_model.fit(X_train, y_train)
+    y_pred_train = new_model.predict(X_train)
+    y_pred_test = new_model.predict(X_test)
 
-f1_test = f1_score(y_test, y_pred_test, average="micro")
-precission_test = precision_score(y_test, y_pred_test, average="micro")
-recall_test = recall_score(y_test, y_pred_test, average="micro")
-accuracy_test = accuracy_score(y_test, y_pred_test)
+    f1_test = f1_score(y_test, y_pred_test, average="micro")
+    precission_test = precision_score(y_test, y_pred_test, average="micro")
+    recall_test = recall_score(y_test, y_pred_test, average="micro")
+    accuracy_test = accuracy_score(y_test, y_pred_test)
 
-print_metrics(y_test, y_pred_test, "y_test")
+    print_metrics(y_test, y_pred_test, "y_test")
 
-cm_test = confusion_matrix(y_test, y_pred_test)
-display_confusion_matrix(cm_test)
+    cm_test = confusion_matrix(y_test, y_pred_test)
+    display_confusion_matrix(cm_test)
