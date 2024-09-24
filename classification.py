@@ -23,7 +23,7 @@ def print_metrics(y_true, y_pred, name="input data"):
     precission = precision_score(y_true, y_pred, average="micro")
     recall = recall_score(y_true, y_pred, average="micro")
     accuracy = accuracy_score(y_true, y_pred)
-    print(f"Metrics for {name} \n\nF1 score: {f1}\n\nPrecission score: {precission}\n\nRecall score: {recall}\n\nAccuracy score: {accuracy}")
+    print(f"\nMetrics for {name} \n\nF1 score: {f1}\nPrecission score: {precission}\nRecall score: {recall}\nAccuracy score: {accuracy}")
 
 if __name__ == "__main__":
     features, label = load_airbnb(df, "Category")
@@ -35,12 +35,8 @@ if __name__ == "__main__":
     y_pred_train = new_model.predict(X_train)
     y_pred_test = new_model.predict(X_test)
 
-    f1_test = f1_score(y_test, y_pred_test, average="micro")
-    precission_test = precision_score(y_test, y_pred_test, average="micro")
-    recall_test = recall_score(y_test, y_pred_test, average="micro")
-    accuracy_test = accuracy_score(y_test, y_pred_test)
-
-    print_metrics(y_test, y_pred_test, "y_test")
+    print_metrics(y_test, y_pred_test, "test set")
+    print_metrics(y_train, y_pred_train, "training set")
 
     cm_test = confusion_matrix(y_test, y_pred_test)
     display_confusion_matrix(cm_test)
