@@ -3,14 +3,13 @@ import joblib
 from itertools import product
 import pandas as pd
 import os
-import tabular_data
 from sklearn import model_selection
 from sklearn.linear_model import SGDRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import r2_score, root_mean_squared_error
-
+import tabular_data
 
 with open("listing.csv", mode="r", encoding="utf8") as f:
     df = pd.read_csv(f)

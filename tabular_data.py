@@ -75,10 +75,11 @@ def load_airbnb(df: pd.DataFrame, label) -> tuple:
     Returns:
         features, labels (tuple): a tuple containing the features and labels extracted from the DataFrame
     """
-    df = df.select_dtypes(include=np.number)
     if label not in df.columns:
         raise Exception("Label not found in columns!")
+    
     labels = df.pop(label)
+    df = df.select_dtypes(include=np.number)
     features = df
     return (features, labels)
 
