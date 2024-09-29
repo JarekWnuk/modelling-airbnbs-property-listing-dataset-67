@@ -111,7 +111,7 @@ def save_model(folder: str, model, hyperparams: dict, metrics: dict) -> None:
         metrics (dict): dictionary with model metrics
     """
     if os.path.isdir(folder) == False:
-        os.mkdir(folder)
+        os.makedirs(folder)
 
     model_complete_path = folder + "/model.joblib"
     model_normalized_path = os.path.normcase(model_complete_path)

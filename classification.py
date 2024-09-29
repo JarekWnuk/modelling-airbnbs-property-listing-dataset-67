@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 from itertools import product
+from modelling import save_model
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn import model_selection
@@ -55,7 +56,7 @@ def custom_tune_classification_model_hyperparameters(
     #calculate metrics for initial model
     test_accuracy = accuracy_score(y_true=y_test, y_pred=y_pred_test)
     validation_accuracy = accuracy_score(y_true=y_validation, y_pred=y_pred_val)
-    f1_validation= f1_score(y_validation, y_pred_val)
+    f1_validation= f1_score(y_validation, y_pred_val, average="micro")
     model_metrics = {"test_accuracy" : test_accuracy, "validation_accuracy" : validation_accuracy, "validation_f1" : f1_validation}
 
     #check if passed hyperparameters align with the model
@@ -80,7 +81,7 @@ def custom_tune_classification_model_hyperparameters(
         y_pred_val = new_model.predict(X_validation)
         new_accuracy_test = accuracy_score(y_true=y_test, y_pred=y_pred_test) 
         new_accuracy_validation = accuracy_score(y_true=y_validation, y_pred=y_pred_val)
-        new_f1_validation = f1_score(y_validation, y_pred_val)
+        new_f1_validation = f1_score(y_validation, y_pred_val, average="micro")
 
         if new_accuracy_validation < model_metrics["validation_accuracy"]: #if new model has better accuracy reuslts then it becomes the best model
             best_model = new_model
@@ -96,13 +97,21 @@ if __name__ == "__main__":
     X_train, X_test, y_train, y_test = model_selection.train_test_split(features, label, test_size=0.3)
     X_validation, X_test, y_validation, y_test = model_selection.train_test_split(X_test, y_test, test_size=0.5)
 
-    new_model = SGDClassifier()
-    new_model.fit(X_train, y_train)
-    y_pred_train = new_model.predict(X_train)
-    y_pred_test = new_model.predict(X_test)
+    SGD_hyperparams = {"loss": ['hinge', 'log_loss', 'modified_huber', 'squared_hinge'],
+                       "penalty": ['l2', 'l1'], "max_iter": [1000, 2000, 5000],
+                        "learning_rate": ['constant', 'optimal', 'invscaling'], "eta0": [0.1, 0.2, 0.5, 1] }
+    best_model, best_hyperparams, metrics = custom_tune_classification_model_hyperparameters(
+        SGDClassifier, X_train, y_train, X_validation, y_validation, X_test, y_test, SGD_hyperparams
+        )
+    folder = "models/classification/logistic_regression"
+    save_model(folder,best_model, best_hyperparams, metrics)
+    # new_model = SGDClassifier()
+    # new_model.fit(X_train, y_train)
+    # y_pred_train = new_model.predict(X_train)
+    # y_pred_test = new_model.predict(X_test)
 
-    print_metrics(y_test, y_pred_test, "test set")
-    print_metrics(y_train, y_pred_train, "training set")
+    # print_metrics(y_test, y_pred_test, "test set")
+    # print_metrics(y_train, y_pred_train, "training set")
 
-    cm_test = confusion_matrix(y_test, y_pred_test)
-    display_confusion_matrix(cm_test)
+    # cm_test = confusion_matrix(y_test, y_pred_test)
+    # display_confusion_matrix(cm_test)
