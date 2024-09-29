@@ -1,0 +1,1 @@
+{"criterion": "log_loss", "min_samples_leaf": 2, "max_features": 2, "splitter": "best", "min_samples_split": 3}

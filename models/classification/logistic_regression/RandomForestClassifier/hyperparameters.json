@@ -1,0 +1,1 @@
+{"n_estimators": 500, "criterion": "entropy", "min_samples_leaf": 1, "max_features": 1}

@@ -1,0 +1,1 @@
+{"learning_rate": [0.1, 0.2, 0.5], "n_estimators": [500, 1000, 2000, 4000], "criterion": ["friedman_mse", "squared_error"]}

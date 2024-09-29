@@ -1,1 +1,0 @@
-{"loss": "hinge", "penalty": "l2", "max_iter": 5000, "learning_rate": "constant", "eta0": 1}
