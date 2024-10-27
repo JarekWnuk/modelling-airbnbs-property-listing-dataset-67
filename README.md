@@ -15,7 +15,8 @@ Use the following link to download a .zip file containing the dataset:
 
 Unzip it and you will find two folders: images and tabular_data. Inside the tabular_data folder, you will find a file called listing.csv which needs to be copied along with the images folder to the program directory.
 Run tabular_data.py to clean the data.
-Run modelling.py to get the best model with its hyperparameters and metrics.
+Run modelling.py to get the best linear model with its hyperparameters and metrics.
+Run classification.py to get the best classification model with its hyperparameters and metrics.
 
 ## File structure
 After all files are in place and the program has been executed the file structure will be as below:
@@ -42,6 +43,23 @@ After all files are in place and the program has been executed the file structur
             └── metrics.json
             └── model.joblib
         └── 📁SGDRegressor
+            └── hyperparameters.json
+            └── metrics.json
+            └── model.joblib
+    └── 📁classification
+        └── 📁DecisionTreeClassifier
+            └── hyperparameters.json
+            └── metrics.json
+            └── model.joblib
+        └── 📁GradientBoostingClassifier
+            └── hyperparameters.json
+            └── metrics.json
+            └── model.joblib
+        └── 📁RandomForestClassifier
+            └── hyperparameters.json
+            └── metrics.json
+            └── model.joblib
+        └── 📁SGDClassifier
             └── hyperparameters.json
             └── metrics.json
             └── model.joblib
