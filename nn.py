@@ -13,11 +13,9 @@ class AirbnbNightlyPriceRegressionDataset(torch.utils.data.Dataset):
     
     def __getitem__(self, index):
         features, label = tabular_data.load_airbnb(self.clean_df, "Price_Night")
-        print(features.columns)
-        example_features = features.iloc[index] 
         example_label = label.iloc[index]
-        example_features_tensor = torch.tensor(example_features)
-        return (example_features_tensor, example_label)
+        example_features = torch.tensor(features.iloc[index].values)
+        return (example_features, example_label)
     
     def __len__(self):
         return len(self.clean_df)
