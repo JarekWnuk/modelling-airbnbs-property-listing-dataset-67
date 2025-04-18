@@ -2,6 +2,7 @@ from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
+from sklearn.model_selection import train_test_split
 import numpy as np
 import pandas as pd
 import tabular_data
@@ -40,30 +41,44 @@ class NN(torch.nn.Module):
         #return prediction
         return self.layers(X)
 
-def train(model, data_loader, epochs=5):
+def train(model, data_loader):
 
-    optimiser = torch.optim.SGD(model.parameters(), lr=0.001)
+    optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    for epoch in range(epochs):
-        for batch in data_loader:
-            features, label = batch
+    for batch in data_loader:
+        features, label = batch
+        label = label.unsqueeze(1)
+        label = label.double()
+        prediction = model(features)
+        train_loss = F.mse_loss(prediction, label)
+        train_loss.backward()
+        optimiser.step()
+        optimiser.zero_grad()
+    
+
+def evaluate(model, data_loader):
+    model.eval()
+    total_loss = 0
+    with torch.no_grad():
+        for features, label in data_loader:
             label = label.unsqueeze(1)
-            label = label.double()
             prediction = model(features)
             loss = F.mse_loss(prediction, label)
-            loss.backward()
-            print(loss.item())
-            optimiser.step()
-            optimiser.zero_grad()
-        
+            total_loss += loss.item()
+    avg_loss = total_loss / len(data_loader)
+    model.train()
+    return avg_loss
 
 if __name__ == "__main__":
     dataset = AirbnbNightlyPriceRegressionDataset()
     train_dataset, test_dataset = random_split(dataset, [0.7, 0.3])
     test_dataset, val_dataset = random_split(test_dataset, [0.5, 0.5])
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+    val_loader = DataLoader(val_dataset,batch_size=64, shuffle=False)
     model = NN()
-    first_data = train_loader[1]
-    print(first_data)
-    #train(model, train_loader)
+    num_epochs = 5
+    for epoch in range(num_epochs):
+        train(model, train_loader)
+        avg_loss = evaluate(model, val_loader)
+        print(f"Average loss: {round(avg_loss, 0)}")
