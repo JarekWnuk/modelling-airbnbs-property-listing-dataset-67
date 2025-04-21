@@ -4,10 +4,12 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
 from torch.utils.tensorboard import SummaryWriter
+import torch
 import numpy as np
 import pandas as pd
 import tabular_data
-import torch
+import yaml
+
 
 class AirbnbNightlyPriceRegressionDataset(Dataset):
     def __init__(self):
@@ -73,6 +75,10 @@ def evaluate(model, data_loader):
     model.train()
     return avg_loss
 
+def get_nn_config():
+    with open("nn_config.yaml", "r") as cf:
+        nn_config_loaded = yaml.safe_load(cf)
+    return nn_config_loaded
 
 if __name__ == "__main__":
     writer = SummaryWriter()
@@ -89,5 +95,3 @@ if __name__ == "__main__":
         writer.flush()
         avg_loss = evaluate(model, val_loader)
         print(f"Average validation loss: {round(avg_loss, 0)}")
-
-    print(model.parameters)
