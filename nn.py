@@ -33,9 +33,9 @@ class NN(torch.nn.Module):
         self.layers = torch.nn.Sequential(
             torch.nn.Linear(11, 8),
             torch.nn.ReLU(),
-            torch.nn.Linear(8, 4),  
+            torch.nn.Linear(8, 8),  
             torch.nn.ReLU(), 
-            torch.nn.Linear(4, 1),    
+            torch.nn.Linear(8, 1),    
         )
         self.double()
     def forward(self, X):
@@ -89,3 +89,5 @@ if __name__ == "__main__":
         writer.flush()
         avg_loss = evaluate(model, val_loader)
         print(f"Average validation loss: {round(avg_loss, 0)}")
+
+    print(model.parameters)
