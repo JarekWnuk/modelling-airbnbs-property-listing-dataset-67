@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torch.utils.data import random_split
 from torch.utils.tensorboard import SummaryWriter
+from torch.optim import *
 import torch
 import numpy as np
 import pandas as pd
@@ -29,8 +30,10 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
         return len(self.clean_df)
     
 class NN(torch.nn.Module):
-    def __init__(self, *args, **kwargs) -> None:
+    def __init__(self, config, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        depth = config["model_depth"]
+        hidden_layer_width = config["hidden_layer_width"]
         # define layers
         self.layers = torch.nn.Sequential(
             torch.nn.Linear(11, 8),
@@ -44,10 +47,19 @@ class NN(torch.nn.Module):
         #return prediction
         return self.layers(X)
 
-def train(model, data_loader):
-
-    optimiser = torch.optim.SGD(model.parameters(), lr=0.02)
-
+def train(model, data_loader, hyperparam_dict):
+    opt_dict = {"SGD": SGD, "Adagrad": Adagrad, "Adam": Adam, "Adamax": Adamax,
+                "Adadelta": Adadelta, "Adam": AdamW, "ASGD": ASGD, "LBFGS": LBFGS,
+                "NAdam": NAdam, "RAdam": RAdam, "RMSprop": RMSprop, "Rprop": Rprop,
+                "SparseAdam": SparseAdam}
+    if hyperparam_dict[optimiser] in opt_dict.keys():
+        opt = hyperparam_dict[optimiser]
+    else:
+        raise ValueError("The optimiser could not be found!")
+    
+    learning_rate = hyperparam_dict["learning_rate"]
+    optimiser = opt(model.parameters(), lr=learning_rate)
+    
     for batch in data_loader:
         train_loss = 0
         features, label = batch
@@ -88,10 +100,12 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
     val_loader = DataLoader(val_dataset,batch_size=64, shuffle=False)
-    model = NN()
+    nn_config = get_nn_config()
+    model = NN(nn_config)
     num_epochs = 15
     for epoch in range(num_epochs):
-        train(model, train_loader)
+        train(model, train_loader, nn_config)
         writer.flush()
         avg_loss = evaluate(model, val_loader)
         print(f"Average validation loss: {round(avg_loss, 0)}")
+
