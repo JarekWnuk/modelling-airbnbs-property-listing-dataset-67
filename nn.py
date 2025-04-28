@@ -35,13 +35,14 @@ class NN(torch.nn.Module):
         depth = config["model_depth"]
         hidden_layer_width = config["hidden_layer_width"]
         # define layers
-        self.layers = torch.nn.Sequential(
-            torch.nn.Linear(11, 8),
-            torch.nn.ReLU(),
-            torch.nn.Linear(8, 8),  
-            torch.nn.ReLU(), 
-            torch.nn.Linear(8, 1),    
-        )
+        layers_list = []
+        layers_list.append(torch.nn.Linear(11, hidden_layer_width))
+        layers_list.append(torch.nn.ReLU())
+        for x in range(depth):
+            layers_list.append(torch.nn.Linear(hidden_layer_width, hidden_layer_width))
+            layers_list.append(torch.nn.ReLU())
+        layers_list.append(torch.nn.Linear(hidden_layer_width, 1))
+        self.layers = torch.nn.Sequential(*layers_list)
         self.double()
     def forward(self, X):
         #return prediction
