@@ -52,14 +52,14 @@ def train(model, data_loader, hyperparam_dict):
                 "Adadelta": Adadelta, "Adam": AdamW, "ASGD": ASGD, "LBFGS": LBFGS,
                 "NAdam": NAdam, "RAdam": RAdam, "RMSprop": RMSprop, "Rprop": Rprop,
                 "SparseAdam": SparseAdam}
-    if hyperparam_dict[optimiser] in opt_dict.keys():
-        opt = hyperparam_dict[optimiser]
+    if hyperparam_dict["optimiser"] in opt_dict.keys():
+        opt = opt_dict[hyperparam_dict["optimiser"]]
     else:
         raise ValueError("The optimiser could not be found!")
     
     learning_rate = hyperparam_dict["learning_rate"]
     optimiser = opt(model.parameters(), lr=learning_rate)
-    
+
     for batch in data_loader:
         train_loss = 0
         features, label = batch
