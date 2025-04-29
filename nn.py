@@ -1,4 +1,3 @@
-from sklearn.model_selection import train_test_split
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -92,6 +91,11 @@ def get_nn_config():
     with open("nn_config.yaml", "r") as cf:
         nn_config_loaded = yaml.safe_load(cf)
     return nn_config_loaded
+
+def save_model(model):
+    if hasattr(model, "state_dict"):
+        torch.save(model.state_dict(), "model.pt")    
+
 
 if __name__ == "__main__":
     writer = SummaryWriter()
