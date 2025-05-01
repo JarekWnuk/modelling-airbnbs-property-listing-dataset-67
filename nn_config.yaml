@@ -1,4 +1,4 @@
 optimiser : SGD
-learning_rate : 0.02
-hidden_layer_width: 8
-model_depth : 3
+learning_rate : 0.005
+hidden_layer_width: 5
+model_depth : 5

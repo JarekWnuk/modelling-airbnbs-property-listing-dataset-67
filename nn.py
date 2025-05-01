@@ -1,3 +1,4 @@
+from torcheval.metrics import R2Score
 from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
@@ -5,10 +6,12 @@ from torch.utils.data import random_split
 from torch.utils.tensorboard import SummaryWriter
 from torch.optim import *
 import torch
+import json
 import numpy as np
 import pandas as pd
 import tabular_data
 import yaml
+import datetime
 
 
 class AirbnbNightlyPriceRegressionDataset(Dataset):
@@ -21,7 +24,7 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
         self.features, self.label = tabular_data.load_airbnb(self.clean_df, "Price_Night")
     
     def __getitem__(self, index):
-        example_label = torch.tensor(self.label.iloc[index])
+        example_label = self.label.iloc[index]
         example_features = torch.tensor(self.features.iloc[index].values)
         return (example_features, example_label)
     
@@ -30,6 +33,7 @@ class AirbnbNightlyPriceRegressionDataset(Dataset):
     
 class NN(torch.nn.Module):
     def __init__(self, config, *args, **kwargs) -> None:
+        self.config = config
         super().__init__(*args, **kwargs)
         depth = config["model_depth"]
         hidden_layer_width = config["hidden_layer_width"]
@@ -43,9 +47,13 @@ class NN(torch.nn.Module):
         layers_list.append(torch.nn.Linear(hidden_layer_width, 1))
         self.layers = torch.nn.Sequential(*layers_list)
         self.double()
+
     def forward(self, X):
         #return prediction
         return self.layers(X)
+    
+    def get_config(self):
+        return self.config
 
 def train(model, data_loader, hyperparam_dict):
     opt_dict = {"SGD": SGD, "Adagrad": Adagrad, "Adam": Adam, "Adamax": Adamax,
@@ -56,36 +64,47 @@ def train(model, data_loader, hyperparam_dict):
         opt = opt_dict[hyperparam_dict["optimiser"]]
     else:
         raise ValueError("The optimiser could not be found!")
-    
     learning_rate = hyperparam_dict["learning_rate"]
     optimiser = opt(model.parameters(), lr=learning_rate)
-
     for batch in data_loader:
-        train_loss = 0
+        RMSE_loss = 0
         features, label = batch
         label = label.unsqueeze(1)
         label = label.double()
         prediction = model(features)
-        train_loss = F.mse_loss(prediction, label)
-        writer.add_scalar("Loss/train", train_loss, epoch)
-        train_loss.backward()
-        optimiser.step()
+        MSE_loss = F.mse_loss(prediction, label)
+        RMSE_loss = torch.sqrt(MSE_loss)
+        writer.add_scalar("Loss/train", RMSE_loss, epoch)
+        MSE_loss.backward()
+        optimiser.step() 
         optimiser.zero_grad()
-    
 
 def evaluate(model, data_loader):
     model.eval()
     total_loss = 0
+    total_pred_time = 0
+    metric = R2Score()
     with torch.no_grad():
-        for features, label in data_loader:
+        for batch in data_loader:
+            features, label = batch
             label = label.unsqueeze(1)
+            pred_time_start = datetime.datetime.now()
             prediction = model(features)
+            pred_time_end = datetime.datetime.now()
+            pred_duration = pred_time_end - pred_time_start
+            if total_pred_time == 0:
+                total_pred_time = pred_duration
+            total_pred_time += pred_duration
             loss = F.mse_loss(prediction, label)
-            total_loss += loss.item()
-    avg_loss = total_loss / len(data_loader)
-    writer.add_scalar("Loss/evaluate", avg_loss, epoch)
+            RMSE_loss = torch.sqrt(loss)
+            total_loss += RMSE_loss.item()
+            metric.update(prediction, label)
+            r2_score = metric.compute()
+    avg_pred_time = total_pred_time / len(data_loader)
+    avg_RMSE_loss = total_loss / len(data_loader)
+    writer.add_scalar("Loss/evaluate", avg_RMSE_loss, epoch)
     model.train()
-    return avg_loss
+    return avg_RMSE_loss, r2_score, avg_pred_time
 
 def get_nn_config():
     with open("nn_config.yaml", "r") as cf:
@@ -94,7 +113,9 @@ def get_nn_config():
 
 def save_model(model):
     if hasattr(model, "state_dict"):
-        torch.save(model.state_dict(), "model.pt")    
+        torch.save(model.state_dict(), "model.pt")
+        f = open("hyperparameters.json", "wb")
+        f.write(model.get_config())
 
 
 if __name__ == "__main__":
@@ -102,15 +123,21 @@ if __name__ == "__main__":
     dataset = AirbnbNightlyPriceRegressionDataset()
     train_dataset, test_dataset = random_split(dataset, [0.7, 0.3])
     test_dataset, val_dataset = random_split(test_dataset, [0.5, 0.5])
-    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
-    val_loader = DataLoader(val_dataset,batch_size=64, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    val_loader = DataLoader(val_dataset,batch_size=32, shuffle=False)
     nn_config = get_nn_config()
     model = NN(nn_config)
-    num_epochs = 15
+    num_epochs = 50
+    training_start_time = datetime.datetime.now()
     for epoch in range(num_epochs):
         train(model, train_loader, nn_config)
         writer.flush()
-        avg_loss = evaluate(model, val_loader)
-        print(f"Average validation loss: {round(avg_loss, 0)}")
-
+    training_end_time = datetime.datetime.now()
+    training_duration = training_end_time - training_start_time
+    print(f"Training duration: {training_duration}")
+    train_RMSE_loss, train_r2_score, avg_train_pred_time = evaluate(model, train_loader)
+    val_RMSE_loss, val_r2_score, avg_val_pred_time = evaluate(model, val_loader)
+    print(f"Average validation loss: {round(val_RMSE_loss, 0)}, R2: {val_r2_score}")
+    print(f"Average train loss: {round(val_RMSE_loss, 0)}, R2: {val_r2_score}")
+    print(f"Train pred time: {avg_train_pred_time}. Val pred time: {avg_val_pred_time}")
